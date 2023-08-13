@@ -39,8 +39,10 @@
 //! * **O** - Operator
 //! * **A** - Account
 //! * **U** - User
-//! * **M** - Module
-//! * **V** - Service / Service Provider
+//! * **M** - Module (extra to nats-io/nkeys)
+//! * **V** - Service / Service Provider (extra to nats-io/nkeys)
+//! * **X** - CurveKey (x25519)
+//! * **Z** - Unknown
 //! * **P** - Private Key
 
 #![allow(dead_code)]
@@ -62,7 +64,8 @@ const PREFIX_BYTE_MODULE: u8 = 12 << 3;
 const PREFIX_BYTE_ACCOUNT: u8 = 0;
 const PREFIX_BYTE_USER: u8 = 20 << 3;
 const PREFIX_BYTE_SERVICE: u8 = 21 << 3;
-const PREFIX_BYTE_UNKNOWN: u8 = 23 << 3;
+const PREFIX_BYTE_CURVE: u8 = 23 << 3;
+const PREFIX_BYTE_UNKNOWN: u8 = 25 << 3;
 
 const PUBLIC_KEY_PREFIXES: [u8; 7] = [
     PREFIX_BYTE_ACCOUNT,
@@ -104,10 +107,14 @@ pub enum KeyPairType {
     Account,
     /// A user identity
     User,
-    /// A module identity - can represent an opaque component, etc.
+    /// A module identity - can represent an opaque component, etc. (extra to nats-io/nkeys)
     Module,
-    /// A service / service provider identity
+    /// A service / service provider identity (extra to nats-io/nkeys)
     Service,
+    /// A Curve (x25519)
+    Curve,
+    /// Unknown
+    Unknown,
 }
 
 impl std::str::FromStr for KeyPairType {
@@ -124,7 +131,8 @@ impl std::str::FromStr for KeyPairType {
             "USER" => Ok(KeyPairType::User),
             "SERVICE" => Ok(KeyPairType::Service),
             "MODULE" => Ok(KeyPairType::Module),
-            _ => Ok(KeyPairType::Module), // Do not crash the app if user input was wrong
+            "CURVE" => Ok(KeyPairType::Curve),
+            _ => Ok(KeyPairType::Unknown), // Do not crash the app if user input was wrong
         }
     }
 }
@@ -139,7 +147,8 @@ impl From<u8> for KeyPairType {
             PREFIX_BYTE_USER => KeyPairType::User,
             PREFIX_BYTE_MODULE => KeyPairType::Module,
             PREFIX_BYTE_SERVICE => KeyPairType::Service,
-            _ => KeyPairType::Operator,
+            PREFIX_BYTE_CURVE => KeyPairType::Curve,
+            _ => KeyPairType::Unknown,
         }
     }
 }
@@ -384,6 +393,8 @@ fn get_prefix_byte(kp_type: &KeyPairType) -> u8 {
         KeyPairType::User => PREFIX_BYTE_USER,
         KeyPairType::Module => PREFIX_BYTE_MODULE,
         KeyPairType::Service => PREFIX_BYTE_SERVICE,
+        KeyPairType::Curve => PREFIX_BYTE_CURVE,
+        KeyPairType::Unknown => PREFIX_BYTE_UNKNOWN,
     }
 }
 
