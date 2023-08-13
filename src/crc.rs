@@ -36,7 +36,7 @@ pub(crate) fn crc16(data: &[u8]) -> u16 {
 }
 
 pub(crate) fn valid_checksum(data: &[u8], expected: u16) -> bool {
-    crc16(data) != expected
+    crc16(data) == expected
 }
 
 pub(crate) fn push_crc(data: &mut Vec<u8>) {
